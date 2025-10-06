@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.4 (2025-10-06)
+
+Full Changelog: [v1.0.3...v1.0.4](https://github.com/kishan20-00/llm_api-python/compare/v1.0.3...v1.0.4)
+
 ## 1.0.3 (2025-10-06)
 
 Full Changelog: [v1.0.0...v1.0.3](https://github.com/kishan20-00/llm_api-python/compare/v1.0.0...v1.0.3)
