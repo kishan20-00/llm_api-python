@@ -1,7 +1,7 @@
 # Llm API Python API library
 
 <!-- prettier-ignore -->
-[![PyPI version](https://img.shields.io/pypi/v/llm_api.svg?label=pypi%20(stable))](https://pypi.org/project/llm_api/)
+[![PyPI version](https://img.shields.io/pypi/v/llm_api_multiple.svg?label=pypi%20(stable))](https://pypi.org/project/llm_api_multiple/)
 
 The Llm API Python library provides convenient access to the Llm API REST API from any Python 3.8+
 application. The library includes type definitions for all request params and response fields,
