@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.3 (2025-10-06)
+
+Full Changelog: [v1.0.0...v1.0.3](https://github.com/kishan20-00/llm_api-python/compare/v1.0.0...v1.0.3)
+
+### Features
+
+* **api:** manual updates ([a6f914d](https://github.com/kishan20-00/llm_api-python/commit/a6f914de7fd5d50e3e4182827627d6336ce313ba))
+* **api:** manual updates ([0e1fa4b](https://github.com/kishan20-00/llm_api-python/commit/0e1fa4bb7d6cb410ccb9f4eb27bf5244e01b67c3))
+
 ## 1.0.0 (2025-10-06)
 
 Full Changelog: [v0.0.1...v1.0.0](https://github.com/kishan20-00/llm_api-python/compare/v0.0.1...v1.0.0)
