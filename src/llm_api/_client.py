@@ -22,7 +22,7 @@ from ._types import (
 )
 from ._utils import is_given, get_async_library
 from ._version import __version__
-from .resources import chat, audio, files, images, models, batches
+from .resources import auth, chat, audio, files, images, models, batches
 from ._streaming import Stream as Stream, AsyncStream as AsyncStream
 from ._exceptions import APIStatusError
 from ._base_client import (
@@ -39,6 +39,7 @@ class LlmAPI(SyncAPIClient):
     audio: audio.AudioResource
     images: images.ImagesResource
     models: models.ModelsResource
+    auth: auth.AuthResource
     files: files.FilesResource
     batches: batches.BatchesResource
     with_raw_response: LlmAPIWithRawResponse
@@ -98,6 +99,7 @@ class LlmAPI(SyncAPIClient):
         self.audio = audio.AudioResource(self)
         self.images = images.ImagesResource(self)
         self.models = models.ModelsResource(self)
+        self.auth = auth.AuthResource(self)
         self.files = files.FilesResource(self)
         self.batches = batches.BatchesResource(self)
         self.with_raw_response = LlmAPIWithRawResponse(self)
@@ -226,6 +228,7 @@ class AsyncLlmAPI(AsyncAPIClient):
     audio: audio.AsyncAudioResource
     images: images.AsyncImagesResource
     models: models.AsyncModelsResource
+    auth: auth.AsyncAuthResource
     files: files.AsyncFilesResource
     batches: batches.AsyncBatchesResource
     with_raw_response: AsyncLlmAPIWithRawResponse
@@ -285,6 +288,7 @@ class AsyncLlmAPI(AsyncAPIClient):
         self.audio = audio.AsyncAudioResource(self)
         self.images = images.AsyncImagesResource(self)
         self.models = models.AsyncModelsResource(self)
+        self.auth = auth.AsyncAuthResource(self)
         self.files = files.AsyncFilesResource(self)
         self.batches = batches.AsyncBatchesResource(self)
         self.with_raw_response = AsyncLlmAPIWithRawResponse(self)
@@ -414,6 +418,7 @@ class LlmAPIWithRawResponse:
         self.audio = audio.AudioResourceWithRawResponse(client.audio)
         self.images = images.ImagesResourceWithRawResponse(client.images)
         self.models = models.ModelsResourceWithRawResponse(client.models)
+        self.auth = auth.AuthResourceWithRawResponse(client.auth)
         self.files = files.FilesResourceWithRawResponse(client.files)
         self.batches = batches.BatchesResourceWithRawResponse(client.batches)
 
@@ -424,6 +429,7 @@ class AsyncLlmAPIWithRawResponse:
         self.audio = audio.AsyncAudioResourceWithRawResponse(client.audio)
         self.images = images.AsyncImagesResourceWithRawResponse(client.images)
         self.models = models.AsyncModelsResourceWithRawResponse(client.models)
+        self.auth = auth.AsyncAuthResourceWithRawResponse(client.auth)
         self.files = files.AsyncFilesResourceWithRawResponse(client.files)
         self.batches = batches.AsyncBatchesResourceWithRawResponse(client.batches)
 
@@ -434,6 +440,7 @@ class LlmAPIWithStreamedResponse:
         self.audio = audio.AudioResourceWithStreamingResponse(client.audio)
         self.images = images.ImagesResourceWithStreamingResponse(client.images)
         self.models = models.ModelsResourceWithStreamingResponse(client.models)
+        self.auth = auth.AuthResourceWithStreamingResponse(client.auth)
         self.files = files.FilesResourceWithStreamingResponse(client.files)
         self.batches = batches.BatchesResourceWithStreamingResponse(client.batches)
 
@@ -444,6 +451,7 @@ class AsyncLlmAPIWithStreamedResponse:
         self.audio = audio.AsyncAudioResourceWithStreamingResponse(client.audio)
         self.images = images.AsyncImagesResourceWithStreamingResponse(client.images)
         self.models = models.AsyncModelsResourceWithStreamingResponse(client.models)
+        self.auth = auth.AsyncAuthResourceWithStreamingResponse(client.auth)
         self.files = files.AsyncFilesResourceWithStreamingResponse(client.files)
         self.batches = batches.AsyncBatchesResourceWithStreamingResponse(client.batches)
 

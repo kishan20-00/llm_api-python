@@ -23,6 +23,12 @@ Methods:
 - <code title="get /models/{model_id}">client.models.<a href="./src/llm_api/resources/models.py">retrieve</a>(model_id) -> object</code>
 - <code title="get /models">client.models.<a href="./src/llm_api/resources/models.py">list</a>() -> object</code>
 
+# Auth
+
+Methods:
+
+- <code title="get /auth/login/github">client.auth.<a href="./src/llm_api/resources/auth.py">retrieve</a>() -> object</code>
+
 # Files
 
 Methods:
