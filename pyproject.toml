@@ -1,5 +1,5 @@
 [project]
-name = "llm_api"
+name = "llm_api_multiple"
 version = "1.0.1"
 description = "The official Python library for the llm_api API"
 dynamic = ["readme"]
