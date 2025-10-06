@@ -1,9 +1,3 @@
-# LlmAPI
-
-Methods:
-
-- <code title="get /">client.<a href="./src/llm_api/_client.py">get_status</a>() -> object</code>
-
 # Chat
 
 Methods:
@@ -53,9 +47,3 @@ Methods:
 - <code title="get /batches/{batch_id}">client.batches.<a href="./src/llm_api/resources/batches.py">retrieve</a>(batch_id) -> object</code>
 - <code title="get /batches">client.batches.<a href="./src/llm_api/resources/batches.py">list</a>(\*\*<a href="src/llm_api/types/batch_list_params.py">params</a>) -> object</code>
 - <code title="post /batches/{batch_id}/cancel">client.batches.<a href="./src/llm_api/resources/batches.py">cancel</a>(batch_id) -> <a href="./src/llm_api/types/batch_cancel_response.py">BatchCancelResponse</a></code>
-
-# Health
-
-Methods:
-
-- <code title="get /health">client.health.<a href="./src/llm_api/resources/health.py">check</a>() -> object</code>
