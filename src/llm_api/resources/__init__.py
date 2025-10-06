@@ -24,14 +24,6 @@ from .files import (
     FilesResourceWithStreamingResponse,
     AsyncFilesResourceWithStreamingResponse,
 )
-from .health import (
-    HealthResource,
-    AsyncHealthResource,
-    HealthResourceWithRawResponse,
-    AsyncHealthResourceWithRawResponse,
-    HealthResourceWithStreamingResponse,
-    AsyncHealthResourceWithStreamingResponse,
-)
 from .images import (
     ImagesResource,
     AsyncImagesResource,
@@ -94,10 +86,4 @@ __all__ = [
     "AsyncBatchesResourceWithRawResponse",
     "BatchesResourceWithStreamingResponse",
     "AsyncBatchesResourceWithStreamingResponse",
-    "HealthResource",
-    "AsyncHealthResource",
-    "HealthResourceWithRawResponse",
-    "AsyncHealthResourceWithRawResponse",
-    "HealthResourceWithStreamingResponse",
-    "AsyncHealthResourceWithStreamingResponse",
 ]

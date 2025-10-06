@@ -11,9 +11,7 @@ import httpx
 from . import _exceptions
 from ._qs import Querystring
 from ._types import (
-    Body,
     Omit,
-    Query,
     Headers,
     Timeout,
     NotGiven,
@@ -24,20 +22,13 @@ from ._types import (
 )
 from ._utils import is_given, get_async_library
 from ._version import __version__
-from ._response import (
-    to_raw_response_wrapper,
-    to_streamed_response_wrapper,
-    async_to_raw_response_wrapper,
-    async_to_streamed_response_wrapper,
-)
-from .resources import chat, audio, files, health, images, models, batches
+from .resources import chat, audio, files, images, models, batches
 from ._streaming import Stream as Stream, AsyncStream as AsyncStream
 from ._exceptions import APIStatusError
 from ._base_client import (
     DEFAULT_MAX_RETRIES,
     SyncAPIClient,
     AsyncAPIClient,
-    make_request_options,
 )
 
 __all__ = ["Timeout", "Transport", "ProxiesTypes", "RequestOptions", "LlmAPI", "AsyncLlmAPI", "Client", "AsyncClient"]
@@ -50,7 +41,6 @@ class LlmAPI(SyncAPIClient):
     models: models.ModelsResource
     files: files.FilesResource
     batches: batches.BatchesResource
-    health: health.HealthResource
     with_raw_response: LlmAPIWithRawResponse
     with_streaming_response: LlmAPIWithStreamedResponse
 
@@ -110,7 +100,6 @@ class LlmAPI(SyncAPIClient):
         self.models = models.ModelsResource(self)
         self.files = files.FilesResource(self)
         self.batches = batches.BatchesResource(self)
-        self.health = health.HealthResource(self)
         self.with_raw_response = LlmAPIWithRawResponse(self)
         self.with_streaming_response = LlmAPIWithStreamedResponse(self)
 
@@ -198,31 +187,6 @@ class LlmAPI(SyncAPIClient):
     # client.with_options(timeout=10).foo.create(...)
     with_options = copy
 
-    def get_status(
-        self,
-        *,
-        # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
-        # The extra values given here take precedence over values defined on the client or passed to this method.
-        extra_headers: Headers | None = None,
-        extra_query: Query | None = None,
-        extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | NotGiven = not_given,
-    ) -> object:
-        """
-        Root endpoint providing a simple status message.
-
-        Args: None
-
-        Returns: dict: A message indicating the application status and environment.
-        """
-        return self.get(
-            "/",
-            options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
-            ),
-            cast_to=object,
-        )
-
     @override
     def _make_status_error(
         self,
@@ -264,7 +228,6 @@ class AsyncLlmAPI(AsyncAPIClient):
     models: models.AsyncModelsResource
     files: files.AsyncFilesResource
     batches: batches.AsyncBatchesResource
-    health: health.AsyncHealthResource
     with_raw_response: AsyncLlmAPIWithRawResponse
     with_streaming_response: AsyncLlmAPIWithStreamedResponse
 
@@ -324,7 +287,6 @@ class AsyncLlmAPI(AsyncAPIClient):
         self.models = models.AsyncModelsResource(self)
         self.files = files.AsyncFilesResource(self)
         self.batches = batches.AsyncBatchesResource(self)
-        self.health = health.AsyncHealthResource(self)
         self.with_raw_response = AsyncLlmAPIWithRawResponse(self)
         self.with_streaming_response = AsyncLlmAPIWithStreamedResponse(self)
 
@@ -412,31 +374,6 @@ class AsyncLlmAPI(AsyncAPIClient):
     # client.with_options(timeout=10).foo.create(...)
     with_options = copy
 
-    async def get_status(
-        self,
-        *,
-        # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
-        # The extra values given here take precedence over values defined on the client or passed to this method.
-        extra_headers: Headers | None = None,
-        extra_query: Query | None = None,
-        extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | NotGiven = not_given,
-    ) -> object:
-        """
-        Root endpoint providing a simple status message.
-
-        Args: None
-
-        Returns: dict: A message indicating the application status and environment.
-        """
-        return await self.get(
-            "/",
-            options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
-            ),
-            cast_to=object,
-        )
-
     @override
     def _make_status_error(
         self,
@@ -479,11 +416,6 @@ class LlmAPIWithRawResponse:
         self.models = models.ModelsResourceWithRawResponse(client.models)
         self.files = files.FilesResourceWithRawResponse(client.files)
         self.batches = batches.BatchesResourceWithRawResponse(client.batches)
-        self.health = health.HealthResourceWithRawResponse(client.health)
-
-        self.get_status = to_raw_response_wrapper(
-            client.get_status,
-        )
 
 
 class AsyncLlmAPIWithRawResponse:
@@ -494,11 +426,6 @@ class AsyncLlmAPIWithRawResponse:
         self.models = models.AsyncModelsResourceWithRawResponse(client.models)
         self.files = files.AsyncFilesResourceWithRawResponse(client.files)
         self.batches = batches.AsyncBatchesResourceWithRawResponse(client.batches)
-        self.health = health.AsyncHealthResourceWithRawResponse(client.health)
-
-        self.get_status = async_to_raw_response_wrapper(
-            client.get_status,
-        )
 
 
 class LlmAPIWithStreamedResponse:
@@ -509,11 +436,6 @@ class LlmAPIWithStreamedResponse:
         self.models = models.ModelsResourceWithStreamingResponse(client.models)
         self.files = files.FilesResourceWithStreamingResponse(client.files)
         self.batches = batches.BatchesResourceWithStreamingResponse(client.batches)
-        self.health = health.HealthResourceWithStreamingResponse(client.health)
-
-        self.get_status = to_streamed_response_wrapper(
-            client.get_status,
-        )
 
 
 class AsyncLlmAPIWithStreamedResponse:
@@ -524,11 +446,6 @@ class AsyncLlmAPIWithStreamedResponse:
         self.models = models.AsyncModelsResourceWithStreamingResponse(client.models)
         self.files = files.AsyncFilesResourceWithStreamingResponse(client.files)
         self.batches = batches.AsyncBatchesResourceWithStreamingResponse(client.batches)
-        self.health = health.AsyncHealthResourceWithStreamingResponse(client.health)
-
-        self.get_status = async_to_streamed_response_wrapper(
-            client.get_status,
-        )
 
 
 Client = LlmAPI
