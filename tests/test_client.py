@@ -22,7 +22,11 @@ from llm_api import LlmAPI, AsyncLlmAPI, APIResponseValidationError
 from llm_api._types import Omit
 from llm_api._utils import asyncify
 from llm_api._models import BaseModel, FinalRequestOptions
-from llm_api._exceptions import APIStatusError, APITimeoutError, APIResponseValidationError
+from llm_api._exceptions import (
+    APIStatusError,
+    APITimeoutError,
+    APIResponseValidationError,
+)
 from llm_api._base_client import (
     DEFAULT_TIMEOUT,
     HTTPX_DEFAULT_TIMEOUT,
@@ -52,18 +56,24 @@ def _low_retry_timeout(*_args: Any, **_kwargs: Any) -> float:
 
 def _get_open_connections(client: LlmAPI | AsyncLlmAPI) -> int:
     transport = client._client._transport
-    assert isinstance(transport, httpx.HTTPTransport) or isinstance(transport, httpx.AsyncHTTPTransport)
+    assert isinstance(transport, httpx.HTTPTransport) or isinstance(
+        transport, httpx.AsyncHTTPTransport
+    )
 
     pool = transport._pool
     return len(pool._requests)
 
 
 class TestLlmAPI:
-    client = LlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+    client = LlmAPI(
+        base_url=base_url, api_key=api_key, _strict_response_validation=True
+    )
 
     @pytest.mark.respx(base_url=base_url)
     def test_raw_response(self, respx_mock: MockRouter) -> None:
-        respx_mock.post("/foo").mock(return_value=httpx.Response(200, json={"foo": "bar"}))
+        respx_mock.post("/foo").mock(
+            return_value=httpx.Response(200, json={"foo": "bar"})
+        )
 
         response = self.client.post("/foo", cast_to=httpx.Response)
         assert response.status_code == 200
@@ -73,7 +83,11 @@ class TestLlmAPI:
     @pytest.mark.respx(base_url=base_url)
     def test_raw_response_for_binary(self, respx_mock: MockRouter) -> None:
         respx_mock.post("/foo").mock(
-            return_value=httpx.Response(200, headers={"Content-Type": "application/binary"}, content='{"foo": "bar"}')
+            return_value=httpx.Response(
+                200,
+                headers={"Content-Type": "application/binary"},
+                content='{"foo": "bar"}',
+            )
         )
 
         response = self.client.post("/foo", cast_to=httpx.Response)
@@ -107,7 +121,10 @@ class TestLlmAPI:
 
     def test_copy_default_headers(self) -> None:
         client = LlmAPI(
-            base_url=base_url, api_key=api_key, _strict_response_validation=True, default_headers={"X-Foo": "bar"}
+            base_url=base_url,
+            api_key=api_key,
+            _strict_response_validation=True,
+            default_headers={"X-Foo": "bar"},
         )
         assert client.default_headers["X-Foo"] == "bar"
 
@@ -141,7 +158,10 @@ class TestLlmAPI:
 
     def test_copy_default_query(self) -> None:
         client = LlmAPI(
-            base_url=base_url, api_key=api_key, _strict_response_validation=True, default_query={"foo": "bar"}
+            base_url=base_url,
+            api_key=api_key,
+            _strict_response_validation=True,
+            default_query={"foo": "bar"},
         )
         assert _get_params(client)["foo"] == "bar"
 
@@ -189,9 +209,14 @@ class TestLlmAPI:
                 continue
 
             copy_param = copy_signature.parameters.get(name)
-            assert copy_param is not None, f"copy() signature is missing the {name} param"
+            assert (
+                copy_param is not None
+            ), f"copy() signature is missing the {name} param"
 
-    @pytest.mark.skipif(sys.version_info >= (3, 10), reason="fails because of a memory leak that started from 3.12")
+    @pytest.mark.skipif(
+        sys.version_info >= (3, 10),
+        reason="fails because of a memory leak that started from 3.12",
+    )
     def test_copy_build_request(self) -> None:
         options = FinalRequestOptions(method="get", url="/foo")
 
@@ -216,7 +241,9 @@ class TestLlmAPI:
 
         tracemalloc.stop()
 
-        def add_leak(leaks: list[tracemalloc.StatisticDiff], diff: tracemalloc.StatisticDiff) -> None:
+        def add_leak(
+            leaks: list[tracemalloc.StatisticDiff], diff: tracemalloc.StatisticDiff
+        ) -> None:
             if diff.count == 0:
                 # Avoid false positives by considering only leaks (i.e. allocations that persist).
                 return
@@ -255,7 +282,9 @@ class TestLlmAPI:
             raise AssertionError()
 
     def test_request_timeout(self) -> None:
-        request = self.client._build_request(FinalRequestOptions(method="get", url="/foo"))
+        request = self.client._build_request(
+            FinalRequestOptions(method="get", url="/foo")
+        )
         timeout = httpx.Timeout(**request.extensions["timeout"])  # type: ignore
         assert timeout == DEFAULT_TIMEOUT
 
@@ -266,7 +295,12 @@ class TestLlmAPI:
         assert timeout == httpx.Timeout(100.0)
 
     def test_client_timeout_option(self) -> None:
-        client = LlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True, timeout=httpx.Timeout(0))
+        client = LlmAPI(
+            base_url=base_url,
+            api_key=api_key,
+            _strict_response_validation=True,
+            timeout=httpx.Timeout(0),
+        )
 
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
         timeout = httpx.Timeout(**request.extensions["timeout"])  # type: ignore
@@ -276,30 +310,45 @@ class TestLlmAPI:
         # custom timeout given to the httpx client should be used
         with httpx.Client(timeout=None) as http_client:
             client = LlmAPI(
-                base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
+                base_url=base_url,
+                api_key=api_key,
+                _strict_response_validation=True,
+                http_client=http_client,
             )
 
-            request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
+            request = client._build_request(
+                FinalRequestOptions(method="get", url="/foo")
+            )
             timeout = httpx.Timeout(**request.extensions["timeout"])  # type: ignore
             assert timeout == httpx.Timeout(None)
 
         # no timeout given to the httpx client should not use the httpx default
         with httpx.Client() as http_client:
             client = LlmAPI(
-                base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
+                base_url=base_url,
+                api_key=api_key,
+                _strict_response_validation=True,
+                http_client=http_client,
             )
 
-            request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
+            request = client._build_request(
+                FinalRequestOptions(method="get", url="/foo")
+            )
             timeout = httpx.Timeout(**request.extensions["timeout"])  # type: ignore
             assert timeout == DEFAULT_TIMEOUT
 
         # explicitly passing the default timeout currently results in it being ignored
         with httpx.Client(timeout=HTTPX_DEFAULT_TIMEOUT) as http_client:
             client = LlmAPI(
-                base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
+                base_url=base_url,
+                api_key=api_key,
+                _strict_response_validation=True,
+                http_client=http_client,
             )
 
-            request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
+            request = client._build_request(
+                FinalRequestOptions(method="get", url="/foo")
+            )
             timeout = httpx.Timeout(**request.extensions["timeout"])  # type: ignore
             assert timeout == DEFAULT_TIMEOUT  # our default
 
@@ -315,7 +364,10 @@ class TestLlmAPI:
 
     def test_default_headers_option(self) -> None:
         client = LlmAPI(
-            base_url=base_url, api_key=api_key, _strict_response_validation=True, default_headers={"X-Foo": "bar"}
+            base_url=base_url,
+            api_key=api_key,
+            _strict_response_validation=True,
+            default_headers={"X-Foo": "bar"},
         )
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
         assert request.headers.get("x-foo") == "bar"
@@ -335,12 +387,16 @@ class TestLlmAPI:
         assert request.headers.get("x-stainless-lang") == "my-overriding-header"
 
     def test_validate_headers(self) -> None:
-        client = LlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = LlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=True
+        )
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
         assert request.headers.get("Authorization") == f"Bearer {api_key}"
 
         with update_env(**{"LLM_API_API_KEY": Omit()}):
-            client2 = LlmAPI(base_url=base_url, api_key=None, _strict_response_validation=True)
+            client2 = LlmAPI(
+                base_url=base_url, api_key=None, _strict_response_validation=True
+            )
 
         with pytest.raises(
             TypeError,
@@ -349,13 +405,18 @@ class TestLlmAPI:
             client2._build_request(FinalRequestOptions(method="get", url="/foo"))
 
         request2 = client2._build_request(
-            FinalRequestOptions(method="get", url="/foo", headers={"Authorization": Omit()})
+            FinalRequestOptions(
+                method="get", url="/foo", headers={"Authorization": Omit()}
+            )
         )
         assert request2.headers.get("Authorization") is None
 
     def test_default_query_option(self) -> None:
         client = LlmAPI(
-            base_url=base_url, api_key=api_key, _strict_response_validation=True, default_query={"query_param": "bar"}
+            base_url=base_url,
+            api_key=api_key,
+            _strict_response_validation=True,
+            default_query={"query_param": "bar"},
         )
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
         url = httpx.URL(request.url)
@@ -416,7 +477,9 @@ class TestLlmAPI:
         assert request.headers.get("X-Foo") == "Foo"
 
         # `extra_headers` takes priority over `default_headers` when keys clash
-        request = self.client.with_options(default_headers={"X-Bar": "true"})._build_request(
+        request = self.client.with_options(
+            default_headers={"X-Bar": "true"}
+        )._build_request(
             FinalRequestOptions(
                 method="post",
                 url="/foo",
@@ -473,7 +536,9 @@ class TestLlmAPI:
             FinalRequestOptions.construct(
                 method="post",
                 url="/foo",
-                headers={"Content-Type": "multipart/form-data; boundary=6b7ba517decee4a450543ea6ae821c82"},
+                headers={
+                    "Content-Type": "multipart/form-data; boundary=6b7ba517decee4a450543ea6ae821c82"
+                },
                 json_data={"array": ["foo", "bar"]},
                 files=[("foo.txt", b"hello world")],
             )
@@ -505,7 +570,9 @@ class TestLlmAPI:
         class Model2(BaseModel):
             foo: str
 
-        respx_mock.get("/foo").mock(return_value=httpx.Response(200, json={"foo": "bar"}))
+        respx_mock.get("/foo").mock(
+            return_value=httpx.Response(200, json={"foo": "bar"})
+        )
 
         response = self.client.get("/foo", cast_to=cast(Any, Union[Model1, Model2]))
         assert isinstance(response, Model2)
@@ -521,7 +588,9 @@ class TestLlmAPI:
         class Model2(BaseModel):
             foo: str
 
-        respx_mock.get("/foo").mock(return_value=httpx.Response(200, json={"foo": "bar"}))
+        respx_mock.get("/foo").mock(
+            return_value=httpx.Response(200, json={"foo": "bar"})
+        )
 
         response = self.client.get("/foo", cast_to=cast(Any, Union[Model1, Model2]))
         assert isinstance(response, Model2)
@@ -534,7 +603,9 @@ class TestLlmAPI:
         assert response.foo == 1
 
     @pytest.mark.respx(base_url=base_url)
-    def test_non_application_json_content_type_for_json_data(self, respx_mock: MockRouter) -> None:
+    def test_non_application_json_content_type_for_json_data(
+        self, respx_mock: MockRouter
+    ) -> None:
         """
         Response that sets Content-Type to something other than application/json but returns json data
         """
@@ -555,7 +626,11 @@ class TestLlmAPI:
         assert response.foo == 2
 
     def test_base_url_setter(self) -> None:
-        client = LlmAPI(base_url="https://example.com/from_init", api_key=api_key, _strict_response_validation=True)
+        client = LlmAPI(
+            base_url="https://example.com/from_init",
+            api_key=api_key,
+            _strict_response_validation=True,
+        )
         assert client.base_url == "https://example.com/from_init/"
 
         client.base_url = "https://example.com/from_setter"  # type: ignore[assignment]
@@ -570,7 +645,11 @@ class TestLlmAPI:
     @pytest.mark.parametrize(
         "client",
         [
-            LlmAPI(base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True),
+            LlmAPI(
+                base_url="http://localhost:5000/custom/path/",
+                api_key=api_key,
+                _strict_response_validation=True,
+            ),
             LlmAPI(
                 base_url="http://localhost:5000/custom/path/",
                 api_key=api_key,
@@ -593,7 +672,11 @@ class TestLlmAPI:
     @pytest.mark.parametrize(
         "client",
         [
-            LlmAPI(base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True),
+            LlmAPI(
+                base_url="http://localhost:5000/custom/path/",
+                api_key=api_key,
+                _strict_response_validation=True,
+            ),
             LlmAPI(
                 base_url="http://localhost:5000/custom/path/",
                 api_key=api_key,
@@ -616,7 +699,11 @@ class TestLlmAPI:
     @pytest.mark.parametrize(
         "client",
         [
-            LlmAPI(base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True),
+            LlmAPI(
+                base_url="http://localhost:5000/custom/path/",
+                api_key=api_key,
+                _strict_response_validation=True,
+            ),
             LlmAPI(
                 base_url="http://localhost:5000/custom/path/",
                 api_key=api_key,
@@ -637,7 +724,9 @@ class TestLlmAPI:
         assert request.url == "https://myapi.com/foo"
 
     def test_copied_client_does_not_close_http(self) -> None:
-        client = LlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = LlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=True
+        )
         assert not client.is_closed()
 
         copied = client.copy()
@@ -648,7 +737,9 @@ class TestLlmAPI:
         assert not client.is_closed()
 
     def test_client_context_manager(self) -> None:
-        client = LlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = LlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=True
+        )
         with client as c2:
             assert c2 is client
             assert not c2.is_closed()
@@ -660,7 +751,9 @@ class TestLlmAPI:
         class Model(BaseModel):
             foo: str
 
-        respx_mock.get("/foo").mock(return_value=httpx.Response(200, json={"foo": {"invalid": True}}))
+        respx_mock.get("/foo").mock(
+            return_value=httpx.Response(200, json={"foo": {"invalid": True}})
+        )
 
         with pytest.raises(APIResponseValidationError) as exc:
             self.client.get("/foo", cast_to=Model)
@@ -669,21 +762,32 @@ class TestLlmAPI:
 
     def test_client_max_retries_validation(self) -> None:
         with pytest.raises(TypeError, match=r"max_retries cannot be None"):
-            LlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True, max_retries=cast(Any, None))
+            LlmAPI(
+                base_url=base_url,
+                api_key=api_key,
+                _strict_response_validation=True,
+                max_retries=cast(Any, None),
+            )
 
     @pytest.mark.respx(base_url=base_url)
     def test_received_text_for_expected_json(self, respx_mock: MockRouter) -> None:
         class Model(BaseModel):
             name: str
 
-        respx_mock.get("/foo").mock(return_value=httpx.Response(200, text="my-custom-format"))
+        respx_mock.get("/foo").mock(
+            return_value=httpx.Response(200, text="my-custom-format")
+        )
 
-        strict_client = LlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        strict_client = LlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=True
+        )
 
         with pytest.raises(APIResponseValidationError):
             strict_client.get("/foo", cast_to=Model)
 
-        client = LlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=False)
+        client = LlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=False
+        )
 
         response = client.get("/foo", cast_to=Model)
         assert isinstance(response, str)  # type: ignore[unreachable]
@@ -710,35 +814,71 @@ class TestLlmAPI:
         ],
     )
     @mock.patch("time.time", mock.MagicMock(return_value=1696004797))
-    def test_parse_retry_after_header(self, remaining_retries: int, retry_after: str, timeout: float) -> None:
-        client = LlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+    def test_parse_retry_after_header(
+        self, remaining_retries: int, retry_after: str, timeout: float
+    ) -> None:
+        client = LlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=True
+        )
 
         headers = httpx.Headers({"retry-after": retry_after})
         options = FinalRequestOptions(method="get", url="/foo", max_retries=3)
-        calculated = client._calculate_retry_timeout(remaining_retries, options, headers)
-        assert calculated == pytest.approx(timeout, 0.5 * 0.875)  # pyright: ignore[reportUnknownMemberType]
+        calculated = client._calculate_retry_timeout(
+            remaining_retries, options, headers
+        )
+        assert calculated == pytest.approx(
+            timeout, 0.5 * 0.875
+        )  # pyright: ignore[reportUnknownMemberType]
 
-    @mock.patch("llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch(
+        "llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout
+    )
     @pytest.mark.respx(base_url=base_url)
-    def test_retrying_timeout_errors_doesnt_leak(self, respx_mock: MockRouter, client: LlmAPI) -> None:
-        respx_mock.post("/chat/completions").mock(side_effect=httpx.TimeoutException("Test timeout error"))
+    def test_retrying_timeout_errors_doesnt_leak(
+        self, respx_mock: MockRouter, client: LlmAPI
+    ) -> None:
+        respx_mock.post("/chat/completions").mock(
+            side_effect=httpx.TimeoutException("Test timeout error")
+        )
 
         with pytest.raises(APITimeoutError):
-            client.chat.with_streaming_response.create_completion(body={"foo": "bar"}).__enter__()
+            client.chat.with_streaming_response.create_completion(
+                messages=[{"role": "user", "content": "Hello!"}],
+                model="deepseek-001",
+                max_tokens=100,
+                temperature=0.7,
+                top_p=0.9,
+                top_k=50,
+                stream=False,
+            ).__enter__()
 
         assert _get_open_connections(self.client) == 0
 
-    @mock.patch("llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch(
+        "llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout
+    )
     @pytest.mark.respx(base_url=base_url)
-    def test_retrying_status_errors_doesnt_leak(self, respx_mock: MockRouter, client: LlmAPI) -> None:
+    def test_retrying_status_errors_doesnt_leak(
+        self, respx_mock: MockRouter, client: LlmAPI
+    ) -> None:
         respx_mock.post("/chat/completions").mock(return_value=httpx.Response(500))
 
         with pytest.raises(APIStatusError):
-            client.chat.with_streaming_response.create_completion(body={"foo": "bar"}).__enter__()
+            client.chat.with_streaming_response.create_completion(
+                messages=[{"role": "user", "content": "Hello!"}],
+                model="deepseek-001",
+                max_tokens=100,
+                temperature=0.7,
+                top_p=0.9,
+                top_k=50,
+                stream=True,
+            ).__enter__()
         assert _get_open_connections(self.client) == 0
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch(
+        "llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout
+    )
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.parametrize("failure_mode", ["status", "exception"])
     def test_retries_taken(
@@ -763,13 +903,26 @@ class TestLlmAPI:
 
         respx_mock.post("/chat/completions").mock(side_effect=retry_handler)
 
-        response = client.chat.with_raw_response.create_completion(body={"foo": "bar"})
+        response = client.chat.with_raw_response.create_completion(
+            messages=[{"role": "user", "content": "Hello!"}],
+            model="deepseek-001",
+            max_tokens=100,
+            temperature=0.7,
+            top_p=0.9,
+            top_k=50,
+            stream=False,
+        )
 
         assert response.retries_taken == failures_before_success
-        assert int(response.http_request.headers.get("x-stainless-retry-count")) == failures_before_success
+        assert (
+            int(response.http_request.headers.get("x-stainless-retry-count"))
+            == failures_before_success
+        )
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch(
+        "llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout
+    )
     @pytest.mark.respx(base_url=base_url)
     def test_omit_retry_count_header(
         self, client: LlmAPI, failures_before_success: int, respx_mock: MockRouter
@@ -788,13 +941,24 @@ class TestLlmAPI:
         respx_mock.post("/chat/completions").mock(side_effect=retry_handler)
 
         response = client.chat.with_raw_response.create_completion(
-            body={"foo": "bar"}, extra_headers={"x-stainless-retry-count": Omit()}
+            messages=[{"role": "user", "content": "Hello!"}],
+            model="deepseek-001",
+            max_tokens=100,
+            temperature=0.7,
+            top_p=0.9,
+            top_k=50,
+            stream=False,
+            extra_headers={"x-stainless-retry-count": Omit()},
         )
 
-        assert len(response.http_request.headers.get_list("x-stainless-retry-count")) == 0
+        assert (
+            len(response.http_request.headers.get_list("x-stainless-retry-count")) == 0
+        )
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch(
+        "llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout
+    )
     @pytest.mark.respx(base_url=base_url)
     def test_overwrite_retry_count_header(
         self, client: LlmAPI, failures_before_success: int, respx_mock: MockRouter
@@ -813,7 +977,14 @@ class TestLlmAPI:
         respx_mock.post("/chat/completions").mock(side_effect=retry_handler)
 
         response = client.chat.with_raw_response.create_completion(
-            body={"foo": "bar"}, extra_headers={"x-stainless-retry-count": "42"}
+            messages=[{"role": "user", "content": "Hello!"}],
+            model="deepseek-001",
+            max_tokens=100,
+            temperature=0.7,
+            top_p=0.9,
+            top_k=50,
+            stream=False,
+            extra_headers={"x-stainless-retry-count": "42"},
         )
 
         assert response.http_request.headers.get("x-stainless-retry-count") == "42"
@@ -844,11 +1015,17 @@ class TestLlmAPI:
     def test_follow_redirects(self, respx_mock: MockRouter) -> None:
         # Test that the default follow_redirects=True allows following redirects
         respx_mock.post("/redirect").mock(
-            return_value=httpx.Response(302, headers={"Location": f"{base_url}/redirected"})
+            return_value=httpx.Response(
+                302, headers={"Location": f"{base_url}/redirected"}
+            )
         )
-        respx_mock.get("/redirected").mock(return_value=httpx.Response(200, json={"status": "ok"}))
+        respx_mock.get("/redirected").mock(
+            return_value=httpx.Response(200, json={"status": "ok"})
+        )
 
-        response = self.client.post("/redirect", body={"key": "value"}, cast_to=httpx.Response)
+        response = self.client.post(
+            "/redirect", body={"key": "value"}, cast_to=httpx.Response
+        )
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
 
@@ -856,12 +1033,17 @@ class TestLlmAPI:
     def test_follow_redirects_disabled(self, respx_mock: MockRouter) -> None:
         # Test that follow_redirects=False prevents following redirects
         respx_mock.post("/redirect").mock(
-            return_value=httpx.Response(302, headers={"Location": f"{base_url}/redirected"})
+            return_value=httpx.Response(
+                302, headers={"Location": f"{base_url}/redirected"}
+            )
         )
 
         with pytest.raises(APIStatusError) as exc_info:
             self.client.post(
-                "/redirect", body={"key": "value"}, options={"follow_redirects": False}, cast_to=httpx.Response
+                "/redirect",
+                body={"key": "value"},
+                options={"follow_redirects": False},
+                cast_to=httpx.Response,
             )
 
         assert exc_info.value.response.status_code == 302
@@ -869,12 +1051,16 @@ class TestLlmAPI:
 
 
 class TestAsyncLlmAPI:
-    client = AsyncLlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+    client = AsyncLlmAPI(
+        base_url=base_url, api_key=api_key, _strict_response_validation=True
+    )
 
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
     async def test_raw_response(self, respx_mock: MockRouter) -> None:
-        respx_mock.post("/foo").mock(return_value=httpx.Response(200, json={"foo": "bar"}))
+        respx_mock.post("/foo").mock(
+            return_value=httpx.Response(200, json={"foo": "bar"})
+        )
 
         response = await self.client.post("/foo", cast_to=httpx.Response)
         assert response.status_code == 200
@@ -885,7 +1071,11 @@ class TestAsyncLlmAPI:
     @pytest.mark.asyncio
     async def test_raw_response_for_binary(self, respx_mock: MockRouter) -> None:
         respx_mock.post("/foo").mock(
-            return_value=httpx.Response(200, headers={"Content-Type": "application/binary"}, content='{"foo": "bar"}')
+            return_value=httpx.Response(
+                200,
+                headers={"Content-Type": "application/binary"},
+                content='{"foo": "bar"}',
+            )
         )
 
         response = await self.client.post("/foo", cast_to=httpx.Response)
@@ -919,7 +1109,10 @@ class TestAsyncLlmAPI:
 
     def test_copy_default_headers(self) -> None:
         client = AsyncLlmAPI(
-            base_url=base_url, api_key=api_key, _strict_response_validation=True, default_headers={"X-Foo": "bar"}
+            base_url=base_url,
+            api_key=api_key,
+            _strict_response_validation=True,
+            default_headers={"X-Foo": "bar"},
         )
         assert client.default_headers["X-Foo"] == "bar"
 
@@ -953,7 +1146,10 @@ class TestAsyncLlmAPI:
 
     def test_copy_default_query(self) -> None:
         client = AsyncLlmAPI(
-            base_url=base_url, api_key=api_key, _strict_response_validation=True, default_query={"foo": "bar"}
+            base_url=base_url,
+            api_key=api_key,
+            _strict_response_validation=True,
+            default_query={"foo": "bar"},
         )
         assert _get_params(client)["foo"] == "bar"
 
@@ -1001,9 +1197,14 @@ class TestAsyncLlmAPI:
                 continue
 
             copy_param = copy_signature.parameters.get(name)
-            assert copy_param is not None, f"copy() signature is missing the {name} param"
+            assert (
+                copy_param is not None
+            ), f"copy() signature is missing the {name} param"
 
-    @pytest.mark.skipif(sys.version_info >= (3, 10), reason="fails because of a memory leak that started from 3.12")
+    @pytest.mark.skipif(
+        sys.version_info >= (3, 10),
+        reason="fails because of a memory leak that started from 3.12",
+    )
     def test_copy_build_request(self) -> None:
         options = FinalRequestOptions(method="get", url="/foo")
 
@@ -1028,7 +1229,9 @@ class TestAsyncLlmAPI:
 
         tracemalloc.stop()
 
-        def add_leak(leaks: list[tracemalloc.StatisticDiff], diff: tracemalloc.StatisticDiff) -> None:
+        def add_leak(
+            leaks: list[tracemalloc.StatisticDiff], diff: tracemalloc.StatisticDiff
+        ) -> None:
             if diff.count == 0:
                 # Avoid false positives by considering only leaks (i.e. allocations that persist).
                 return
@@ -1067,7 +1270,9 @@ class TestAsyncLlmAPI:
             raise AssertionError()
 
     async def test_request_timeout(self) -> None:
-        request = self.client._build_request(FinalRequestOptions(method="get", url="/foo"))
+        request = self.client._build_request(
+            FinalRequestOptions(method="get", url="/foo")
+        )
         timeout = httpx.Timeout(**request.extensions["timeout"])  # type: ignore
         assert timeout == DEFAULT_TIMEOUT
 
@@ -1079,7 +1284,10 @@ class TestAsyncLlmAPI:
 
     async def test_client_timeout_option(self) -> None:
         client = AsyncLlmAPI(
-            base_url=base_url, api_key=api_key, _strict_response_validation=True, timeout=httpx.Timeout(0)
+            base_url=base_url,
+            api_key=api_key,
+            _strict_response_validation=True,
+            timeout=httpx.Timeout(0),
         )
 
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
@@ -1090,30 +1298,45 @@ class TestAsyncLlmAPI:
         # custom timeout given to the httpx client should be used
         async with httpx.AsyncClient(timeout=None) as http_client:
             client = AsyncLlmAPI(
-                base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
+                base_url=base_url,
+                api_key=api_key,
+                _strict_response_validation=True,
+                http_client=http_client,
             )
 
-            request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
+            request = client._build_request(
+                FinalRequestOptions(method="get", url="/foo")
+            )
             timeout = httpx.Timeout(**request.extensions["timeout"])  # type: ignore
             assert timeout == httpx.Timeout(None)
 
         # no timeout given to the httpx client should not use the httpx default
         async with httpx.AsyncClient() as http_client:
             client = AsyncLlmAPI(
-                base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
+                base_url=base_url,
+                api_key=api_key,
+                _strict_response_validation=True,
+                http_client=http_client,
             )
 
-            request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
+            request = client._build_request(
+                FinalRequestOptions(method="get", url="/foo")
+            )
             timeout = httpx.Timeout(**request.extensions["timeout"])  # type: ignore
             assert timeout == DEFAULT_TIMEOUT
 
         # explicitly passing the default timeout currently results in it being ignored
         async with httpx.AsyncClient(timeout=HTTPX_DEFAULT_TIMEOUT) as http_client:
             client = AsyncLlmAPI(
-                base_url=base_url, api_key=api_key, _strict_response_validation=True, http_client=http_client
+                base_url=base_url,
+                api_key=api_key,
+                _strict_response_validation=True,
+                http_client=http_client,
             )
 
-            request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
+            request = client._build_request(
+                FinalRequestOptions(method="get", url="/foo")
+            )
             timeout = httpx.Timeout(**request.extensions["timeout"])  # type: ignore
             assert timeout == DEFAULT_TIMEOUT  # our default
 
@@ -1129,7 +1352,10 @@ class TestAsyncLlmAPI:
 
     def test_default_headers_option(self) -> None:
         client = AsyncLlmAPI(
-            base_url=base_url, api_key=api_key, _strict_response_validation=True, default_headers={"X-Foo": "bar"}
+            base_url=base_url,
+            api_key=api_key,
+            _strict_response_validation=True,
+            default_headers={"X-Foo": "bar"},
         )
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
         assert request.headers.get("x-foo") == "bar"
@@ -1149,12 +1375,16 @@ class TestAsyncLlmAPI:
         assert request.headers.get("x-stainless-lang") == "my-overriding-header"
 
     def test_validate_headers(self) -> None:
-        client = AsyncLlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = AsyncLlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=True
+        )
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
         assert request.headers.get("Authorization") == f"Bearer {api_key}"
 
         with update_env(**{"LLM_API_API_KEY": Omit()}):
-            client2 = AsyncLlmAPI(base_url=base_url, api_key=None, _strict_response_validation=True)
+            client2 = AsyncLlmAPI(
+                base_url=base_url, api_key=None, _strict_response_validation=True
+            )
 
         with pytest.raises(
             TypeError,
@@ -1163,13 +1393,18 @@ class TestAsyncLlmAPI:
             client2._build_request(FinalRequestOptions(method="get", url="/foo"))
 
         request2 = client2._build_request(
-            FinalRequestOptions(method="get", url="/foo", headers={"Authorization": Omit()})
+            FinalRequestOptions(
+                method="get", url="/foo", headers={"Authorization": Omit()}
+            )
         )
         assert request2.headers.get("Authorization") is None
 
     def test_default_query_option(self) -> None:
         client = AsyncLlmAPI(
-            base_url=base_url, api_key=api_key, _strict_response_validation=True, default_query={"query_param": "bar"}
+            base_url=base_url,
+            api_key=api_key,
+            _strict_response_validation=True,
+            default_query={"query_param": "bar"},
         )
         request = client._build_request(FinalRequestOptions(method="get", url="/foo"))
         url = httpx.URL(request.url)
@@ -1230,7 +1465,9 @@ class TestAsyncLlmAPI:
         assert request.headers.get("X-Foo") == "Foo"
 
         # `extra_headers` takes priority over `default_headers` when keys clash
-        request = self.client.with_options(default_headers={"X-Bar": "true"})._build_request(
+        request = self.client.with_options(
+            default_headers={"X-Bar": "true"}
+        )._build_request(
             FinalRequestOptions(
                 method="post",
                 url="/foo",
@@ -1287,7 +1524,9 @@ class TestAsyncLlmAPI:
             FinalRequestOptions.construct(
                 method="post",
                 url="/foo",
-                headers={"Content-Type": "multipart/form-data; boundary=6b7ba517decee4a450543ea6ae821c82"},
+                headers={
+                    "Content-Type": "multipart/form-data; boundary=6b7ba517decee4a450543ea6ae821c82"
+                },
                 json_data={"array": ["foo", "bar"]},
                 files=[("foo.txt", b"hello world")],
             )
@@ -1319,9 +1558,13 @@ class TestAsyncLlmAPI:
         class Model2(BaseModel):
             foo: str
 
-        respx_mock.get("/foo").mock(return_value=httpx.Response(200, json={"foo": "bar"}))
+        respx_mock.get("/foo").mock(
+            return_value=httpx.Response(200, json={"foo": "bar"})
+        )
 
-        response = await self.client.get("/foo", cast_to=cast(Any, Union[Model1, Model2]))
+        response = await self.client.get(
+            "/foo", cast_to=cast(Any, Union[Model1, Model2])
+        )
         assert isinstance(response, Model2)
         assert response.foo == "bar"
 
@@ -1335,20 +1578,28 @@ class TestAsyncLlmAPI:
         class Model2(BaseModel):
             foo: str
 
-        respx_mock.get("/foo").mock(return_value=httpx.Response(200, json={"foo": "bar"}))
+        respx_mock.get("/foo").mock(
+            return_value=httpx.Response(200, json={"foo": "bar"})
+        )
 
-        response = await self.client.get("/foo", cast_to=cast(Any, Union[Model1, Model2]))
+        response = await self.client.get(
+            "/foo", cast_to=cast(Any, Union[Model1, Model2])
+        )
         assert isinstance(response, Model2)
         assert response.foo == "bar"
 
         respx_mock.get("/foo").mock(return_value=httpx.Response(200, json={"foo": 1}))
 
-        response = await self.client.get("/foo", cast_to=cast(Any, Union[Model1, Model2]))
+        response = await self.client.get(
+            "/foo", cast_to=cast(Any, Union[Model1, Model2])
+        )
         assert isinstance(response, Model1)
         assert response.foo == 1
 
     @pytest.mark.respx(base_url=base_url)
-    async def test_non_application_json_content_type_for_json_data(self, respx_mock: MockRouter) -> None:
+    async def test_non_application_json_content_type_for_json_data(
+        self, respx_mock: MockRouter
+    ) -> None:
         """
         Response that sets Content-Type to something other than application/json but returns json data
         """
@@ -1370,7 +1621,9 @@ class TestAsyncLlmAPI:
 
     def test_base_url_setter(self) -> None:
         client = AsyncLlmAPI(
-            base_url="https://example.com/from_init", api_key=api_key, _strict_response_validation=True
+            base_url="https://example.com/from_init",
+            api_key=api_key,
+            _strict_response_validation=True,
         )
         assert client.base_url == "https://example.com/from_init/"
 
@@ -1387,7 +1640,9 @@ class TestAsyncLlmAPI:
         "client",
         [
             AsyncLlmAPI(
-                base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True
+                base_url="http://localhost:5000/custom/path/",
+                api_key=api_key,
+                _strict_response_validation=True,
             ),
             AsyncLlmAPI(
                 base_url="http://localhost:5000/custom/path/",
@@ -1412,7 +1667,9 @@ class TestAsyncLlmAPI:
         "client",
         [
             AsyncLlmAPI(
-                base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True
+                base_url="http://localhost:5000/custom/path/",
+                api_key=api_key,
+                _strict_response_validation=True,
             ),
             AsyncLlmAPI(
                 base_url="http://localhost:5000/custom/path/",
@@ -1437,7 +1694,9 @@ class TestAsyncLlmAPI:
         "client",
         [
             AsyncLlmAPI(
-                base_url="http://localhost:5000/custom/path/", api_key=api_key, _strict_response_validation=True
+                base_url="http://localhost:5000/custom/path/",
+                api_key=api_key,
+                _strict_response_validation=True,
             ),
             AsyncLlmAPI(
                 base_url="http://localhost:5000/custom/path/",
@@ -1459,7 +1718,9 @@ class TestAsyncLlmAPI:
         assert request.url == "https://myapi.com/foo"
 
     async def test_copied_client_does_not_close_http(self) -> None:
-        client = AsyncLlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = AsyncLlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=True
+        )
         assert not client.is_closed()
 
         copied = client.copy()
@@ -1471,7 +1732,9 @@ class TestAsyncLlmAPI:
         assert not client.is_closed()
 
     async def test_client_context_manager(self) -> None:
-        client = AsyncLlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        client = AsyncLlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=True
+        )
         async with client as c2:
             assert c2 is client
             assert not c2.is_closed()
@@ -1480,11 +1743,15 @@ class TestAsyncLlmAPI:
 
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
-    async def test_client_response_validation_error(self, respx_mock: MockRouter) -> None:
+    async def test_client_response_validation_error(
+        self, respx_mock: MockRouter
+    ) -> None:
         class Model(BaseModel):
             foo: str
 
-        respx_mock.get("/foo").mock(return_value=httpx.Response(200, json={"foo": {"invalid": True}}))
+        respx_mock.get("/foo").mock(
+            return_value=httpx.Response(200, json={"foo": {"invalid": True}})
+        )
 
         with pytest.raises(APIResponseValidationError) as exc:
             await self.client.get("/foo", cast_to=Model)
@@ -1494,23 +1761,34 @@ class TestAsyncLlmAPI:
     async def test_client_max_retries_validation(self) -> None:
         with pytest.raises(TypeError, match=r"max_retries cannot be None"):
             AsyncLlmAPI(
-                base_url=base_url, api_key=api_key, _strict_response_validation=True, max_retries=cast(Any, None)
+                base_url=base_url,
+                api_key=api_key,
+                _strict_response_validation=True,
+                max_retries=cast(Any, None),
             )
 
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
-    async def test_received_text_for_expected_json(self, respx_mock: MockRouter) -> None:
+    async def test_received_text_for_expected_json(
+        self, respx_mock: MockRouter
+    ) -> None:
         class Model(BaseModel):
             name: str
 
-        respx_mock.get("/foo").mock(return_value=httpx.Response(200, text="my-custom-format"))
+        respx_mock.get("/foo").mock(
+            return_value=httpx.Response(200, text="my-custom-format")
+        )
 
-        strict_client = AsyncLlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+        strict_client = AsyncLlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=True
+        )
 
         with pytest.raises(APIResponseValidationError):
             await strict_client.get("/foo", cast_to=Model)
 
-        client = AsyncLlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=False)
+        client = AsyncLlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=False
+        )
 
         response = await client.get("/foo", cast_to=Model)
         assert isinstance(response, str)  # type: ignore[unreachable]
@@ -1538,35 +1816,71 @@ class TestAsyncLlmAPI:
     )
     @mock.patch("time.time", mock.MagicMock(return_value=1696004797))
     @pytest.mark.asyncio
-    async def test_parse_retry_after_header(self, remaining_retries: int, retry_after: str, timeout: float) -> None:
-        client = AsyncLlmAPI(base_url=base_url, api_key=api_key, _strict_response_validation=True)
+    async def test_parse_retry_after_header(
+        self, remaining_retries: int, retry_after: str, timeout: float
+    ) -> None:
+        client = AsyncLlmAPI(
+            base_url=base_url, api_key=api_key, _strict_response_validation=True
+        )
 
         headers = httpx.Headers({"retry-after": retry_after})
         options = FinalRequestOptions(method="get", url="/foo", max_retries=3)
-        calculated = client._calculate_retry_timeout(remaining_retries, options, headers)
-        assert calculated == pytest.approx(timeout, 0.5 * 0.875)  # pyright: ignore[reportUnknownMemberType]
+        calculated = client._calculate_retry_timeout(
+            remaining_retries, options, headers
+        )
+        assert calculated == pytest.approx(
+            timeout, 0.5 * 0.875
+        )  # pyright: ignore[reportUnknownMemberType]
 
-    @mock.patch("llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch(
+        "llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout
+    )
     @pytest.mark.respx(base_url=base_url)
-    async def test_retrying_timeout_errors_doesnt_leak(self, respx_mock: MockRouter, async_client: AsyncLlmAPI) -> None:
-        respx_mock.post("/chat/completions").mock(side_effect=httpx.TimeoutException("Test timeout error"))
+    async def test_retrying_timeout_errors_doesnt_leak(
+        self, respx_mock: MockRouter, async_client: AsyncLlmAPI
+    ) -> None:
+        respx_mock.post("/chat/completions").mock(
+            side_effect=httpx.TimeoutException("Test timeout error")
+        )
 
         with pytest.raises(APITimeoutError):
-            await async_client.chat.with_streaming_response.create_completion(body={"foo": "bar"}).__aenter__()
+            await async_client.chat.with_streaming_response.create_completion(
+                messages=[{"role": "user", "content": "Hello!"}],
+                model="deepseek-001",
+                max_tokens=100,
+                temperature=0.7,
+                top_p=0.9,
+                top_k=50,
+                stream=True,
+            ).__aenter__()
 
         assert _get_open_connections(self.client) == 0
 
-    @mock.patch("llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch(
+        "llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout
+    )
     @pytest.mark.respx(base_url=base_url)
-    async def test_retrying_status_errors_doesnt_leak(self, respx_mock: MockRouter, async_client: AsyncLlmAPI) -> None:
+    async def test_retrying_status_errors_doesnt_leak(
+        self, respx_mock: MockRouter, async_client: AsyncLlmAPI
+    ) -> None:
         respx_mock.post("/chat/completions").mock(return_value=httpx.Response(500))
 
         with pytest.raises(APIStatusError):
-            await async_client.chat.with_streaming_response.create_completion(body={"foo": "bar"}).__aenter__()
+            await async_client.chat.with_streaming_response.create_completion(
+                messages=[{"role": "user", "content": "Hello!"}],
+                model="deepseek-001",
+                max_tokens=100,
+                temperature=0.7,
+                top_p=0.9,
+                top_k=50,
+                stream=True,
+            ).__aenter__()
         assert _get_open_connections(self.client) == 0
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch(
+        "llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout
+    )
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
     @pytest.mark.parametrize("failure_mode", ["status", "exception"])
@@ -1592,17 +1906,33 @@ class TestAsyncLlmAPI:
 
         respx_mock.post("/chat/completions").mock(side_effect=retry_handler)
 
-        response = await client.chat.with_raw_response.create_completion(body={"foo": "bar"})
+        response = await client.chat.with_raw_response.create_completion(
+            messages=[{"role": "user", "content": "Hello!"}],
+            model="deepseek-001",
+            max_tokens=100,
+            temperature=0.7,
+            top_p=0.9,
+            top_k=50,
+            stream=False,
+        )
 
         assert response.retries_taken == failures_before_success
-        assert int(response.http_request.headers.get("x-stainless-retry-count")) == failures_before_success
+        assert (
+            int(response.http_request.headers.get("x-stainless-retry-count"))
+            == failures_before_success
+        )
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch(
+        "llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout
+    )
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
     async def test_omit_retry_count_header(
-        self, async_client: AsyncLlmAPI, failures_before_success: int, respx_mock: MockRouter
+        self,
+        async_client: AsyncLlmAPI,
+        failures_before_success: int,
+        respx_mock: MockRouter,
     ) -> None:
         client = async_client.with_options(max_retries=4)
 
@@ -1618,17 +1948,31 @@ class TestAsyncLlmAPI:
         respx_mock.post("/chat/completions").mock(side_effect=retry_handler)
 
         response = await client.chat.with_raw_response.create_completion(
-            body={"foo": "bar"}, extra_headers={"x-stainless-retry-count": Omit()}
+            messages=[{"role": "user", "content": "Hello!"}],
+            model="deepseek-001",
+            max_tokens=100,
+            temperature=0.7,
+            top_p=0.9,
+            top_k=50,
+            stream=False,
+            extra_headers={"x-stainless-retry-count": Omit()},
         )
 
-        assert len(response.http_request.headers.get_list("x-stainless-retry-count")) == 0
+        assert (
+            len(response.http_request.headers.get_list("x-stainless-retry-count")) == 0
+        )
 
     @pytest.mark.parametrize("failures_before_success", [0, 2, 4])
-    @mock.patch("llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout)
+    @mock.patch(
+        "llm_api._base_client.BaseClient._calculate_retry_timeout", _low_retry_timeout
+    )
     @pytest.mark.respx(base_url=base_url)
     @pytest.mark.asyncio
     async def test_overwrite_retry_count_header(
-        self, async_client: AsyncLlmAPI, failures_before_success: int, respx_mock: MockRouter
+        self,
+        async_client: AsyncLlmAPI,
+        failures_before_success: int,
+        respx_mock: MockRouter,
     ) -> None:
         client = async_client.with_options(max_retries=4)
 
@@ -1644,7 +1988,14 @@ class TestAsyncLlmAPI:
         respx_mock.post("/chat/completions").mock(side_effect=retry_handler)
 
         response = await client.chat.with_raw_response.create_completion(
-            body={"foo": "bar"}, extra_headers={"x-stainless-retry-count": "42"}
+            messages=[{"role": "user", "content": "Hello!"}],
+            model="deepseek-001",
+            max_tokens=100,
+            temperature=0.7,
+            top_p=0.9,
+            top_k=50,
+            stream=False,
+            extra_headers={"x-stainless-retry-count": "42"},
         )
 
         assert response.http_request.headers.get("x-stainless-retry-count") == "42"
@@ -1653,7 +2004,9 @@ class TestAsyncLlmAPI:
         platform = await asyncify(get_platform)()
         assert isinstance(platform, (str, OtherPlatform))
 
-    async def test_proxy_environment_variables(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def test_proxy_environment_variables(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         # Test that the proxy environment variables are set correctly
         monkeypatch.setenv("HTTPS_PROXY", "https://example.org")
 
@@ -1679,11 +2032,17 @@ class TestAsyncLlmAPI:
     async def test_follow_redirects(self, respx_mock: MockRouter) -> None:
         # Test that the default follow_redirects=True allows following redirects
         respx_mock.post("/redirect").mock(
-            return_value=httpx.Response(302, headers={"Location": f"{base_url}/redirected"})
+            return_value=httpx.Response(
+                302, headers={"Location": f"{base_url}/redirected"}
+            )
         )
-        respx_mock.get("/redirected").mock(return_value=httpx.Response(200, json={"status": "ok"}))
+        respx_mock.get("/redirected").mock(
+            return_value=httpx.Response(200, json={"status": "ok"})
+        )
 
-        response = await self.client.post("/redirect", body={"key": "value"}, cast_to=httpx.Response)
+        response = await self.client.post(
+            "/redirect", body={"key": "value"}, cast_to=httpx.Response
+        )
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
 
@@ -1691,12 +2050,17 @@ class TestAsyncLlmAPI:
     async def test_follow_redirects_disabled(self, respx_mock: MockRouter) -> None:
         # Test that follow_redirects=False prevents following redirects
         respx_mock.post("/redirect").mock(
-            return_value=httpx.Response(302, headers={"Location": f"{base_url}/redirected"})
+            return_value=httpx.Response(
+                302, headers={"Location": f"{base_url}/redirected"}
+            )
         )
 
         with pytest.raises(APIStatusError) as exc_info:
             await self.client.post(
-                "/redirect", body={"key": "value"}, options={"follow_redirects": False}, cast_to=httpx.Response
+                "/redirect",
+                body={"key": "value"},
+                options={"follow_redirects": False},
+                cast_to=httpx.Response,
             )
 
         assert exc_info.value.response.status_code == 302
