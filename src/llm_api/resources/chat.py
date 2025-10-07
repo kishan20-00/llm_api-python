@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List  # Standard Library Import
 
-import httpx
+import httpx  # Third-Party Import
 
-from ..types import chat_create_completion_params
-from .._types import Body, Query, Headers, NotGiven, not_given
-from .._utils import maybe_transform, async_maybe_transform
-from .._compat import cached_property
+from .._compat import cached_property  # Local/Project Imports
 from .._resource import SyncAPIResource, AsyncAPIResource
 from .._response import (
     to_raw_response_wrapper,
@@ -18,6 +15,9 @@ from .._response import (
     async_to_streamed_response_wrapper,
 )
 from .._base_client import make_request_options
+from .._types import Body, Query, Headers, NotGiven, not_given
+from .._utils import maybe_transform, async_maybe_transform
+from ..types import chat_create_completion_params
 
 __all__ = ["ChatResource", "AsyncChatResource"]
 
