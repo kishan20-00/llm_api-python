@@ -31,7 +31,16 @@ from ._base_client import (
     AsyncAPIClient,
 )
 
-__all__ = ["Timeout", "Transport", "ProxiesTypes", "RequestOptions", "LlmAPI", "AsyncLlmAPI", "Client", "AsyncClient"]
+__all__ = [
+    "Timeout",
+    "Transport",
+    "ProxiesTypes",
+    "RequestOptions",
+    "LlmAPI",
+    "AsyncLlmAPI",
+    "Client",
+    "AsyncClient",
+]
 
 
 class LlmAPI(SyncAPIClient):
@@ -81,7 +90,7 @@ class LlmAPI(SyncAPIClient):
         if base_url is None:
             base_url = os.environ.get("LLM_API_BASE_URL")
         if base_url is None:
-            base_url = f"https://api.example.com"
+            base_url = f"http://localhost:8000/openai/v1"
 
         super().__init__(
             version=__version__,
@@ -154,10 +163,14 @@ class LlmAPI(SyncAPIClient):
         Create a new client instance re-using the same options given to the current client with optional overriding.
         """
         if default_headers is not None and set_default_headers is not None:
-            raise ValueError("The `default_headers` and `set_default_headers` arguments are mutually exclusive")
+            raise ValueError(
+                "The `default_headers` and `set_default_headers` arguments are mutually exclusive"
+            )
 
         if default_query is not None and set_default_query is not None:
-            raise ValueError("The `default_query` and `set_default_query` arguments are mutually exclusive")
+            raise ValueError(
+                "The `default_query` and `set_default_query` arguments are mutually exclusive"
+            )
 
         headers = self._custom_headers
         if default_headers is not None:
@@ -199,10 +212,14 @@ class LlmAPI(SyncAPIClient):
             return _exceptions.BadRequestError(err_msg, response=response, body=body)
 
         if response.status_code == 401:
-            return _exceptions.AuthenticationError(err_msg, response=response, body=body)
+            return _exceptions.AuthenticationError(
+                err_msg, response=response, body=body
+            )
 
         if response.status_code == 403:
-            return _exceptions.PermissionDeniedError(err_msg, response=response, body=body)
+            return _exceptions.PermissionDeniedError(
+                err_msg, response=response, body=body
+            )
 
         if response.status_code == 404:
             return _exceptions.NotFoundError(err_msg, response=response, body=body)
@@ -211,13 +228,17 @@ class LlmAPI(SyncAPIClient):
             return _exceptions.ConflictError(err_msg, response=response, body=body)
 
         if response.status_code == 422:
-            return _exceptions.UnprocessableEntityError(err_msg, response=response, body=body)
+            return _exceptions.UnprocessableEntityError(
+                err_msg, response=response, body=body
+            )
 
         if response.status_code == 429:
             return _exceptions.RateLimitError(err_msg, response=response, body=body)
 
         if response.status_code >= 500:
-            return _exceptions.InternalServerError(err_msg, response=response, body=body)
+            return _exceptions.InternalServerError(
+                err_msg, response=response, body=body
+            )
         return APIStatusError(err_msg, response=response, body=body)
 
 
@@ -341,10 +362,14 @@ class AsyncLlmAPI(AsyncAPIClient):
         Create a new client instance re-using the same options given to the current client with optional overriding.
         """
         if default_headers is not None and set_default_headers is not None:
-            raise ValueError("The `default_headers` and `set_default_headers` arguments are mutually exclusive")
+            raise ValueError(
+                "The `default_headers` and `set_default_headers` arguments are mutually exclusive"
+            )
 
         if default_query is not None and set_default_query is not None:
-            raise ValueError("The `default_query` and `set_default_query` arguments are mutually exclusive")
+            raise ValueError(
+                "The `default_query` and `set_default_query` arguments are mutually exclusive"
+            )
 
         headers = self._custom_headers
         if default_headers is not None:
@@ -386,10 +411,14 @@ class AsyncLlmAPI(AsyncAPIClient):
             return _exceptions.BadRequestError(err_msg, response=response, body=body)
 
         if response.status_code == 401:
-            return _exceptions.AuthenticationError(err_msg, response=response, body=body)
+            return _exceptions.AuthenticationError(
+                err_msg, response=response, body=body
+            )
 
         if response.status_code == 403:
-            return _exceptions.PermissionDeniedError(err_msg, response=response, body=body)
+            return _exceptions.PermissionDeniedError(
+                err_msg, response=response, body=body
+            )
 
         if response.status_code == 404:
             return _exceptions.NotFoundError(err_msg, response=response, body=body)
@@ -398,13 +427,17 @@ class AsyncLlmAPI(AsyncAPIClient):
             return _exceptions.ConflictError(err_msg, response=response, body=body)
 
         if response.status_code == 422:
-            return _exceptions.UnprocessableEntityError(err_msg, response=response, body=body)
+            return _exceptions.UnprocessableEntityError(
+                err_msg, response=response, body=body
+            )
 
         if response.status_code == 429:
             return _exceptions.RateLimitError(err_msg, response=response, body=body)
 
         if response.status_code >= 500:
-            return _exceptions.InternalServerError(err_msg, response=response, body=body)
+            return _exceptions.InternalServerError(
+                err_msg, response=response, body=body
+            )
         return APIStatusError(err_msg, response=response, body=body)
 
 

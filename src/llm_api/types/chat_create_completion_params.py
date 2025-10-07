@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing_extensions import Required, TypedDict
+from typing import Dict, Any, List
+from typing_extensions import TypedDict
 
 __all__ = ["ChatCreateCompletionParams"]
 
 
 class ChatCreateCompletionParams(TypedDict, total=False):
-    body: Required[Dict[str, object]]
+    messages: List[Dict[str, Any]]
+    model: str
+    max_tokens: int
+    temperature: float
+    top_p: float
+    top_k: int
+    stream: bool

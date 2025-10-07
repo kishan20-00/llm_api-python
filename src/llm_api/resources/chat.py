@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Any, List  # Standard Library Import
 
-import httpx
+import httpx  # Third-Party Import
 
-from ..types import chat_create_completion_params
-from .._types import Body, Query, Headers, NotGiven, not_given
-from .._utils import maybe_transform, async_maybe_transform
-from .._compat import cached_property
+from .._compat import cached_property  # Local/Project Imports
 from .._resource import SyncAPIResource, AsyncAPIResource
 from .._response import (
     to_raw_response_wrapper,
@@ -18,6 +15,9 @@ from .._response import (
     async_to_streamed_response_wrapper,
 )
 from .._base_client import make_request_options
+from .._types import Body, Query, Headers, NotGiven, not_given
+from .._utils import maybe_transform, async_maybe_transform
+from ..types import chat_create_completion_params
 
 __all__ = ["ChatResource", "AsyncChatResource"]
 
@@ -45,7 +45,13 @@ class ChatResource(SyncAPIResource):
     def create_completion(
         self,
         *,
-        body: Dict[str, object],
+        messages: List[Dict[str, Any]],
+        model: str,
+        max_tokens: int,
+        temperature: float,
+        top_p: float,
+        top_k: int,
+        stream: bool,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -81,9 +87,23 @@ class ChatResource(SyncAPIResource):
         """
         return self._post(
             "/chat/completions",
-            body=maybe_transform(body, chat_create_completion_params.ChatCreateCompletionParams),
+            body=maybe_transform(
+                {
+                    "messages": messages,
+                    "model": model,
+                    "max_tokens": max_tokens,
+                    "temperature": temperature,
+                    "top_p": top_p,
+                    "top_k": top_k,
+                    "stream": stream,
+                },
+                chat_create_completion_params.ChatCreateCompletionParams,
+            ),
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=object,
         )
@@ -112,7 +132,13 @@ class AsyncChatResource(AsyncAPIResource):
     async def create_completion(
         self,
         *,
-        body: Dict[str, object],
+        messages: List[Dict[str, Any]],
+        model: str,
+        max_tokens: int,
+        temperature: float,
+        top_p: float,
+        top_k: int,
+        stream: bool,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -148,9 +174,23 @@ class AsyncChatResource(AsyncAPIResource):
         """
         return await self._post(
             "/chat/completions",
-            body=await async_maybe_transform(body, chat_create_completion_params.ChatCreateCompletionParams),
+            body=await async_maybe_transform(
+                {
+                    "messages": messages,
+                    "model": model,
+                    "max_tokens": max_tokens,
+                    "temperature": temperature,
+                    "top_p": top_p,
+                    "top_k": top_k,
+                    "stream": stream,
+                },
+                chat_create_completion_params.ChatCreateCompletionParams,
+            ),
             options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
+                extra_headers=extra_headers,
+                extra_query=extra_query,
+                extra_body=extra_body,
+                timeout=timeout,
             ),
             cast_to=object,
         )
