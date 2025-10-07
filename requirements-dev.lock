@@ -100,8 +100,11 @@ pygments==2.18.0
 pyright==1.1.399
 pytest==8.3.3
     # via pytest-asyncio
+    # via pytest-stub
     # via pytest-xdist
 pytest-asyncio==0.24.0
+pytest-stub==1.1.0
+    # via llm-api-multiple
 pytest-xdist==3.7.0
 python-dateutil==2.8.2
     # via time-machine
