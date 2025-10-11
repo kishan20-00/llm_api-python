@@ -1,6 +1,6 @@
 [project]
 name = "llm_api_multiple"
-version = "1.0.5"
+version = "1.0.6"
 description = "The official Python library for the llm_api API"
 dynamic = ["readme"]
 license = "Apache-2.0"

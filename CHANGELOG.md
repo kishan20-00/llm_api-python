@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.6 (2025-10-11)
+
+Full Changelog: [v1.0.5...v1.0.6](https://github.com/kishan20-00/llm_api-python/compare/v1.0.5...v1.0.6)
+
+### Chores
+
+* **internal:** detect missing future annotations with ruff ([2d46529](https://github.com/kishan20-00/llm_api-python/commit/2d46529228b86bed5df0fe54653daf5c45b8e775))
+
 ## 1.0.5 (2025-10-07)
 
 Full Changelog: [v1.0.4...v1.0.5](https://github.com/kishan20-00/llm_api-python/compare/v1.0.4...v1.0.5)
