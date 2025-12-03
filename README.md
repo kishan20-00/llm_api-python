@@ -81,6 +81,7 @@ pip install llm_api[aiohttp]
 Then you can enable it by instantiating the client with `http_client=DefaultAioHttpClient()`:
 
 ```python
+import os
 import asyncio
 from llm_api import DefaultAioHttpClient
 from llm_api import AsyncLlmAPI
@@ -88,7 +89,7 @@ from llm_api import AsyncLlmAPI
 
 async def main() -> None:
     async with AsyncLlmAPI(
-        api_key="My API Key",
+        api_key=os.environ.get("LLM_API_API_KEY"),  # This is the default and can be omitted
         http_client=DefaultAioHttpClient(),
     ) as client:
         response = await client.chat.create_completion(
