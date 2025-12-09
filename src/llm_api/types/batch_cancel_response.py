@@ -6,6 +6,8 @@ __all__ = ["BatchCancelResponse"]
 
 
 class BatchCancelResponse(BaseModel):
+    """The response schema returned when attempting to cancel a batch job."""
+
     batch_id: str
     """The batch ID"""
 

@@ -9,6 +9,8 @@ __all__ = ["BatchCreateResponse", "RequestCounts"]
 
 
 class RequestCounts(BaseModel):
+    """A model to track the total, completed, and failed requests within a batch job."""
+
     completed: Optional[int] = None
 
     failed: Optional[int] = None
@@ -17,6 +19,8 @@ class RequestCounts(BaseModel):
 
 
 class BatchCreateResponse(BaseModel):
+    """The response schema returned upon creating or retrieving a batch job."""
+
     id: str
     """The batch ID."""
 
