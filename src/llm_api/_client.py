@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 from typing_extensions import Self, override
 
 import httpx
@@ -21,8 +21,8 @@ from ._types import (
     not_given,
 )
 from ._utils import is_given, get_async_library
+from ._compat import cached_property
 from ._version import __version__
-from .resources import chat, audio, files, images, models, batches
 from ._streaming import Stream as Stream, AsyncStream as AsyncStream
 from ._exceptions import APIStatusError
 from ._base_client import (
@@ -31,19 +31,19 @@ from ._base_client import (
     AsyncAPIClient,
 )
 
+if TYPE_CHECKING:
+    from .resources import chat, audio, files, images, models, batches
+    from .resources.chat import ChatResource, AsyncChatResource
+    from .resources.audio import AudioResource, AsyncAudioResource
+    from .resources.files import FilesResource, AsyncFilesResource
+    from .resources.images import ImagesResource, AsyncImagesResource
+    from .resources.models import ModelsResource, AsyncModelsResource
+    from .resources.batches import BatchesResource, AsyncBatchesResource
+
 __all__ = ["Timeout", "Transport", "ProxiesTypes", "RequestOptions", "LlmAPI", "AsyncLlmAPI", "Client", "AsyncClient"]
 
 
 class LlmAPI(SyncAPIClient):
-    chat: chat.ChatResource
-    audio: audio.AudioResource
-    images: images.ImagesResource
-    models: models.ModelsResource
-    files: files.FilesResource
-    batches: batches.BatchesResource
-    with_raw_response: LlmAPIWithRawResponse
-    with_streaming_response: LlmAPIWithStreamedResponse
-
     # client options
     api_key: str | None
 
@@ -94,14 +94,49 @@ class LlmAPI(SyncAPIClient):
             _strict_response_validation=_strict_response_validation,
         )
 
-        self.chat = chat.ChatResource(self)
-        self.audio = audio.AudioResource(self)
-        self.images = images.ImagesResource(self)
-        self.models = models.ModelsResource(self)
-        self.files = files.FilesResource(self)
-        self.batches = batches.BatchesResource(self)
-        self.with_raw_response = LlmAPIWithRawResponse(self)
-        self.with_streaming_response = LlmAPIWithStreamedResponse(self)
+    @cached_property
+    def chat(self) -> ChatResource:
+        from .resources.chat import ChatResource
+
+        return ChatResource(self)
+
+    @cached_property
+    def audio(self) -> AudioResource:
+        from .resources.audio import AudioResource
+
+        return AudioResource(self)
+
+    @cached_property
+    def images(self) -> ImagesResource:
+        from .resources.images import ImagesResource
+
+        return ImagesResource(self)
+
+    @cached_property
+    def models(self) -> ModelsResource:
+        from .resources.models import ModelsResource
+
+        return ModelsResource(self)
+
+    @cached_property
+    def files(self) -> FilesResource:
+        from .resources.files import FilesResource
+
+        return FilesResource(self)
+
+    @cached_property
+    def batches(self) -> BatchesResource:
+        from .resources.batches import BatchesResource
+
+        return BatchesResource(self)
+
+    @cached_property
+    def with_raw_response(self) -> LlmAPIWithRawResponse:
+        return LlmAPIWithRawResponse(self)
+
+    @cached_property
+    def with_streaming_response(self) -> LlmAPIWithStreamedResponse:
+        return LlmAPIWithStreamedResponse(self)
 
     @property
     @override
@@ -222,15 +257,6 @@ class LlmAPI(SyncAPIClient):
 
 
 class AsyncLlmAPI(AsyncAPIClient):
-    chat: chat.AsyncChatResource
-    audio: audio.AsyncAudioResource
-    images: images.AsyncImagesResource
-    models: models.AsyncModelsResource
-    files: files.AsyncFilesResource
-    batches: batches.AsyncBatchesResource
-    with_raw_response: AsyncLlmAPIWithRawResponse
-    with_streaming_response: AsyncLlmAPIWithStreamedResponse
-
     # client options
     api_key: str | None
 
@@ -281,14 +307,49 @@ class AsyncLlmAPI(AsyncAPIClient):
             _strict_response_validation=_strict_response_validation,
         )
 
-        self.chat = chat.AsyncChatResource(self)
-        self.audio = audio.AsyncAudioResource(self)
-        self.images = images.AsyncImagesResource(self)
-        self.models = models.AsyncModelsResource(self)
-        self.files = files.AsyncFilesResource(self)
-        self.batches = batches.AsyncBatchesResource(self)
-        self.with_raw_response = AsyncLlmAPIWithRawResponse(self)
-        self.with_streaming_response = AsyncLlmAPIWithStreamedResponse(self)
+    @cached_property
+    def chat(self) -> AsyncChatResource:
+        from .resources.chat import AsyncChatResource
+
+        return AsyncChatResource(self)
+
+    @cached_property
+    def audio(self) -> AsyncAudioResource:
+        from .resources.audio import AsyncAudioResource
+
+        return AsyncAudioResource(self)
+
+    @cached_property
+    def images(self) -> AsyncImagesResource:
+        from .resources.images import AsyncImagesResource
+
+        return AsyncImagesResource(self)
+
+    @cached_property
+    def models(self) -> AsyncModelsResource:
+        from .resources.models import AsyncModelsResource
+
+        return AsyncModelsResource(self)
+
+    @cached_property
+    def files(self) -> AsyncFilesResource:
+        from .resources.files import AsyncFilesResource
+
+        return AsyncFilesResource(self)
+
+    @cached_property
+    def batches(self) -> AsyncBatchesResource:
+        from .resources.batches import AsyncBatchesResource
+
+        return AsyncBatchesResource(self)
+
+    @cached_property
+    def with_raw_response(self) -> AsyncLlmAPIWithRawResponse:
+        return AsyncLlmAPIWithRawResponse(self)
+
+    @cached_property
+    def with_streaming_response(self) -> AsyncLlmAPIWithStreamedResponse:
+        return AsyncLlmAPIWithStreamedResponse(self)
 
     @property
     @override
@@ -409,43 +470,175 @@ class AsyncLlmAPI(AsyncAPIClient):
 
 
 class LlmAPIWithRawResponse:
+    _client: LlmAPI
+
     def __init__(self, client: LlmAPI) -> None:
-        self.chat = chat.ChatResourceWithRawResponse(client.chat)
-        self.audio = audio.AudioResourceWithRawResponse(client.audio)
-        self.images = images.ImagesResourceWithRawResponse(client.images)
-        self.models = models.ModelsResourceWithRawResponse(client.models)
-        self.files = files.FilesResourceWithRawResponse(client.files)
-        self.batches = batches.BatchesResourceWithRawResponse(client.batches)
+        self._client = client
+
+    @cached_property
+    def chat(self) -> chat.ChatResourceWithRawResponse:
+        from .resources.chat import ChatResourceWithRawResponse
+
+        return ChatResourceWithRawResponse(self._client.chat)
+
+    @cached_property
+    def audio(self) -> audio.AudioResourceWithRawResponse:
+        from .resources.audio import AudioResourceWithRawResponse
+
+        return AudioResourceWithRawResponse(self._client.audio)
+
+    @cached_property
+    def images(self) -> images.ImagesResourceWithRawResponse:
+        from .resources.images import ImagesResourceWithRawResponse
+
+        return ImagesResourceWithRawResponse(self._client.images)
+
+    @cached_property
+    def models(self) -> models.ModelsResourceWithRawResponse:
+        from .resources.models import ModelsResourceWithRawResponse
+
+        return ModelsResourceWithRawResponse(self._client.models)
+
+    @cached_property
+    def files(self) -> files.FilesResourceWithRawResponse:
+        from .resources.files import FilesResourceWithRawResponse
+
+        return FilesResourceWithRawResponse(self._client.files)
+
+    @cached_property
+    def batches(self) -> batches.BatchesResourceWithRawResponse:
+        from .resources.batches import BatchesResourceWithRawResponse
+
+        return BatchesResourceWithRawResponse(self._client.batches)
 
 
 class AsyncLlmAPIWithRawResponse:
+    _client: AsyncLlmAPI
+
     def __init__(self, client: AsyncLlmAPI) -> None:
-        self.chat = chat.AsyncChatResourceWithRawResponse(client.chat)
-        self.audio = audio.AsyncAudioResourceWithRawResponse(client.audio)
-        self.images = images.AsyncImagesResourceWithRawResponse(client.images)
-        self.models = models.AsyncModelsResourceWithRawResponse(client.models)
-        self.files = files.AsyncFilesResourceWithRawResponse(client.files)
-        self.batches = batches.AsyncBatchesResourceWithRawResponse(client.batches)
+        self._client = client
+
+    @cached_property
+    def chat(self) -> chat.AsyncChatResourceWithRawResponse:
+        from .resources.chat import AsyncChatResourceWithRawResponse
+
+        return AsyncChatResourceWithRawResponse(self._client.chat)
+
+    @cached_property
+    def audio(self) -> audio.AsyncAudioResourceWithRawResponse:
+        from .resources.audio import AsyncAudioResourceWithRawResponse
+
+        return AsyncAudioResourceWithRawResponse(self._client.audio)
+
+    @cached_property
+    def images(self) -> images.AsyncImagesResourceWithRawResponse:
+        from .resources.images import AsyncImagesResourceWithRawResponse
+
+        return AsyncImagesResourceWithRawResponse(self._client.images)
+
+    @cached_property
+    def models(self) -> models.AsyncModelsResourceWithRawResponse:
+        from .resources.models import AsyncModelsResourceWithRawResponse
+
+        return AsyncModelsResourceWithRawResponse(self._client.models)
+
+    @cached_property
+    def files(self) -> files.AsyncFilesResourceWithRawResponse:
+        from .resources.files import AsyncFilesResourceWithRawResponse
+
+        return AsyncFilesResourceWithRawResponse(self._client.files)
+
+    @cached_property
+    def batches(self) -> batches.AsyncBatchesResourceWithRawResponse:
+        from .resources.batches import AsyncBatchesResourceWithRawResponse
+
+        return AsyncBatchesResourceWithRawResponse(self._client.batches)
 
 
 class LlmAPIWithStreamedResponse:
+    _client: LlmAPI
+
     def __init__(self, client: LlmAPI) -> None:
-        self.chat = chat.ChatResourceWithStreamingResponse(client.chat)
-        self.audio = audio.AudioResourceWithStreamingResponse(client.audio)
-        self.images = images.ImagesResourceWithStreamingResponse(client.images)
-        self.models = models.ModelsResourceWithStreamingResponse(client.models)
-        self.files = files.FilesResourceWithStreamingResponse(client.files)
-        self.batches = batches.BatchesResourceWithStreamingResponse(client.batches)
+        self._client = client
+
+    @cached_property
+    def chat(self) -> chat.ChatResourceWithStreamingResponse:
+        from .resources.chat import ChatResourceWithStreamingResponse
+
+        return ChatResourceWithStreamingResponse(self._client.chat)
+
+    @cached_property
+    def audio(self) -> audio.AudioResourceWithStreamingResponse:
+        from .resources.audio import AudioResourceWithStreamingResponse
+
+        return AudioResourceWithStreamingResponse(self._client.audio)
+
+    @cached_property
+    def images(self) -> images.ImagesResourceWithStreamingResponse:
+        from .resources.images import ImagesResourceWithStreamingResponse
+
+        return ImagesResourceWithStreamingResponse(self._client.images)
+
+    @cached_property
+    def models(self) -> models.ModelsResourceWithStreamingResponse:
+        from .resources.models import ModelsResourceWithStreamingResponse
+
+        return ModelsResourceWithStreamingResponse(self._client.models)
+
+    @cached_property
+    def files(self) -> files.FilesResourceWithStreamingResponse:
+        from .resources.files import FilesResourceWithStreamingResponse
+
+        return FilesResourceWithStreamingResponse(self._client.files)
+
+    @cached_property
+    def batches(self) -> batches.BatchesResourceWithStreamingResponse:
+        from .resources.batches import BatchesResourceWithStreamingResponse
+
+        return BatchesResourceWithStreamingResponse(self._client.batches)
 
 
 class AsyncLlmAPIWithStreamedResponse:
+    _client: AsyncLlmAPI
+
     def __init__(self, client: AsyncLlmAPI) -> None:
-        self.chat = chat.AsyncChatResourceWithStreamingResponse(client.chat)
-        self.audio = audio.AsyncAudioResourceWithStreamingResponse(client.audio)
-        self.images = images.AsyncImagesResourceWithStreamingResponse(client.images)
-        self.models = models.AsyncModelsResourceWithStreamingResponse(client.models)
-        self.files = files.AsyncFilesResourceWithStreamingResponse(client.files)
-        self.batches = batches.AsyncBatchesResourceWithStreamingResponse(client.batches)
+        self._client = client
+
+    @cached_property
+    def chat(self) -> chat.AsyncChatResourceWithStreamingResponse:
+        from .resources.chat import AsyncChatResourceWithStreamingResponse
+
+        return AsyncChatResourceWithStreamingResponse(self._client.chat)
+
+    @cached_property
+    def audio(self) -> audio.AsyncAudioResourceWithStreamingResponse:
+        from .resources.audio import AsyncAudioResourceWithStreamingResponse
+
+        return AsyncAudioResourceWithStreamingResponse(self._client.audio)
+
+    @cached_property
+    def images(self) -> images.AsyncImagesResourceWithStreamingResponse:
+        from .resources.images import AsyncImagesResourceWithStreamingResponse
+
+        return AsyncImagesResourceWithStreamingResponse(self._client.images)
+
+    @cached_property
+    def models(self) -> models.AsyncModelsResourceWithStreamingResponse:
+        from .resources.models import AsyncModelsResourceWithStreamingResponse
+
+        return AsyncModelsResourceWithStreamingResponse(self._client.models)
+
+    @cached_property
+    def files(self) -> files.AsyncFilesResourceWithStreamingResponse:
+        from .resources.files import AsyncFilesResourceWithStreamingResponse
+
+        return AsyncFilesResourceWithStreamingResponse(self._client.files)
+
+    @cached_property
+    def batches(self) -> batches.AsyncBatchesResourceWithStreamingResponse:
+        from .resources.batches import AsyncBatchesResourceWithStreamingResponse
+
+        return AsyncBatchesResourceWithStreamingResponse(self._client.batches)
 
 
 Client = LlmAPI
